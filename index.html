@@ -1,61 +1,69 @@
-<script>
-const basePath = "/GTA-V-Asset-Gallery/public/thumbnails";
-const genders = ["male", "female", "groups"];
-const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
-const maxImages = 300; // per category
-const imageFormat = "png"; // change if jpg/webp
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My GTA Assets</title>
+</head>
+<body>
+	
+  
+  <!-- Ads Banner -->
+    <script type="text/javascript">
+	atOptions = {
+		'key' : '85349b9cf8f2795baf3bba4b26f2e528',
+		'format' : 'iframe',
+		'height' : 90,
+		'width' : 728,
+		'params' : {}
+	};
+  </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
+  <div id="root"></div>
 
-document.body.insertAdjacentHTML('beforeend', `
-  <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
-    <h2>GTA V Asset Gallery</h2>
-    <div style="margin-bottom:20px;">
-      <select id="genderSelect">${genders.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
-      <select id="groupSelect">${groups.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
-      <button id="loadBtn">Load Images</button>
-    </div>
-    <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
-  </div>
-`);
+	<div style="position:fixed; top:0; right:0; width:728px; height:90px; z-index:999;">
+	<script type="text/javascript">
+	atOptions = {
+		'key' : '85349b9cf8f2795baf3bba4b26f2e528',
+		'format' : 'iframe',
+		'height' : 90,
+		'width' : 728,
+		'params' : {}
+	};
+  </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
+  <div id="root"></div> </div>
+	
+<!-- Ads Banners -->
+<!-- Ads NativBanner -->
+	<div style="position:fixed; right:0; top:120px; width:160px; z-index:999;">
+	<script async="async" data-cfasync="false" src="//pl27708186.revenuecpmgate.com/b86bf2587acfea20d938e7ec6026c781/invoke.js"></script>
+<div id="container-b86bf2587acfea20d938e7ec6026c781"></div> </div>
+<!-- Ads NativBanner -->
+	
 
-async function loadImages() {
-  const gender = document.getElementById("genderSelect").value;
-  const group = document.getElementById("groupSelect").value;
-  const folderPath = `${basePath}/${gender}/${group}/`;
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = `<p>Loading ${folderPath}...</p>`;
+  <div id="root"></div>
+  <script src="bundle.js"></script>
 
-  const fragment = document.createDocumentFragment();
-  let foundAny = false;
-  for (let i = 0; i < maxImages; i++) {
-    const num = String(i).padStart(3, '0');
-    const url = `${folderPath}mp_${gender[0]}_freemode_01_${group.toLowerCase()}_${num}.${imageFormat}`;
-    const img = new Image();
-    img.src = url;
-    await new Promise(resolve => {
-      img.onload = () => {
-        foundAny = true;
-        img.loading = "lazy";
-        img.style.width = "128px";
-        img.style.height = "128px";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "8px";
-        img.style.boxShadow = "0 0 4px rgba(0,0,0,0.4)";
-        fragment.appendChild(img);
-        resolve();
-      };
-      img.onerror = resolve;
-    });
-  }
+</body>
 
-  gallery.innerHTML = "";
-  if (!foundAny) {
-    gallery.innerHTML = `<p>No images found in ${folderPath}</p>`;
-  } else {
-    gallery.appendChild(fragment);
-  }
-}
+	
+<!-- Ads Social Bar-->
+	<script type='text/javascript' src='//pl27708173.revenuecpmgate.com/a5/26/59/a526597337dc05bd49d4a48e8c83d1cb.js'></script>
+	
+</html>
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("loadBtn").addEventListener("click", loadImages);
-});
-</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
