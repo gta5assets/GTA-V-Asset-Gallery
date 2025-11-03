@@ -5,65 +5,110 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My GTA Assets</title>
 </head>
-<body>
-	
-  
+<body style="background:#111;color:#fff;margin:0;font-family:sans-serif;">
+
   <!-- Ads Banner -->
+  <script type="text/javascript">
+    atOptions = {
+      'key' : '85349b9cf8f2795baf3bba4b26f2e528',
+      'format' : 'iframe',
+      'height' : 90,
+      'width' : 728,
+      'params' : {}
+    };
+  </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
+
+  <!-- Top Right Banner -->
+  <div style="position:fixed; top:0; right:0; width:728px; height:90px; z-index:999;">
     <script type="text/javascript">
-	atOptions = {
-		'key' : '85349b9cf8f2795baf3bba4b26f2e528',
-		'format' : 'iframe',
-		'height' : 90,
-		'width' : 728,
-		'params' : {}
-	};
-  </script>
-  <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
-  <div id="root"></div>
+      atOptions = {
+        'key' : '85349b9cf8f2795baf3bba4b26f2e528',
+        'format' : 'iframe',
+        'height' : 90,
+        'width' : 728,
+        'params' : {}
+      };
+    </script>
+    <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
+  </div>
 
-	<div style="position:fixed; top:0; right:0; width:728px; height:90px; z-index:999;">
-	<script type="text/javascript">
-	atOptions = {
-		'key' : '85349b9cf8f2795baf3bba4b26f2e528',
-		'format' : 'iframe',
-		'height' : 90,
-		'width' : 728,
-		'params' : {}
-	};
-  </script>
-  <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
-  <div id="root"></div> </div>
-	
-<!-- Ads Banners -->
-<!-- Ads NativBanner -->
-	<div style="position:fixed; right:0; top:120px; width:160px; z-index:999;">
-	<script async="async" data-cfasync="false" src="//pl27708186.revenuecpmgate.com/b86bf2587acfea20d938e7ec6026c781/invoke.js"></script>
-<div id="container-b86bf2587acfea20d938e7ec6026c781"></div> </div>
-<!-- Ads NativBanner -->
-	
+  <!-- Right Side Native Ad -->
+  <div style="position:fixed; right:0; top:120px; width:160px; z-index:999;">
+    <script async="async" data-cfasync="false" src="//pl27708186.revenuecpmgate.com/b86bf2587acfea20d938e7ec6026c781/invoke.js"></script>
+    <div id="container-b86bf2587acfea20d938e7ec6026c781"></div>
+  </div>
 
+  <!-- React bundle (old) -->
   <div id="root"></div>
   <script src="bundle.js"></script>
 
+  <!-- === New External Loader === -->
+  <script>
+  const basePath = "public/thumbnails";
+  const genders = ["male", "female", "groups"];
+  const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
+  const maxImagesToLoad = 500;
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
+      <h2>GTA V Asset Gallery</h2>
+      <div style="margin-bottom:20px;">
+        <select id="genderSelect" style="padding:6px 10px;">${genders.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
+        <select id="groupSelect" style="padding:6px 10px;">${groups.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
+        <button id="loadBtn" style="padding:6px 14px;cursor:pointer;">Load Images</button>
+      </div>
+      <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
+    </div>
+  `);
+
+  async function fetchFolderImages(path) {
+    try {
+      const res = await fetch(path);
+      const text = await res.text();
+      const matches = [...text.matchAll(/href="([^"?]+\\.(png|jpg|jpeg|webp))"/gi)];
+      return matches.map(m => path + m[1]);
+    } catch (e) {
+      console.error("Folder fetch error:", e);
+      return [];
+    }
+  }
+
+  async function loadImages() {
+    const gender = document.getElementById("genderSelect").value;
+    const group = document.getElementById("groupSelect").value;
+    const folderPath = `${basePath}/${gender}/${group}/`;
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = `<p style="font-family:sans-serif;">Loading ${folderPath}...</p>`;
+
+    const imgs = await fetchFolderImages(folderPath);
+    gallery.innerHTML = "";
+    if (imgs.length === 0) {
+      gallery.innerHTML = `<p>No images found in ${folderPath}</p>`;
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < Math.min(imgs.length, maxImagesToLoad); i++) {
+      const img = document.createElement("img");
+      img.src = imgs[i];
+      img.loading = "lazy";
+      img.style.width = "128px";
+      img.style.height = "128px";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "8px";
+      img.style.boxShadow = "0 0 4px rgba(0,0,0,0.4)";
+      fragment.appendChild(img);
+    }
+    gallery.appendChild(fragment);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("loadBtn").addEventListener("click", loadImages);
+  });
+  </script>
+
+  <!-- Social bar ads -->
+  <script type='text/javascript' src='//pl27708173.revenuecpmgate.com/a5/26/59/a526597337dc05bd49d4a48e8c83d1cb.js'></script>
 </body>
-
-	
-<!-- Ads Social Bar-->
-	<script type='text/javascript' src='//pl27708173.revenuecpmgate.com/a5/26/59/a526597337dc05bd49d4a48e8c83d1cb.js'></script>
-	
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
