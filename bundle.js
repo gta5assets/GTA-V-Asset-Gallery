@@ -1,13 +1,13 @@
-// GTA V Asset Gallery - Category Wise Loader (Ashu Mods Version)
+// GTA V Asset Gallery (Ashu Mods) - Working with GitHub Raw URLs
 
-const owner = "gta5assets";          // <== apna GitHub username
-const repo = "GTA-V-Asset-Gallery";  // <== apna repo name
+const owner = "gta5assets";          // 👈 apna GitHub username
+const repo = "GTA-V-Asset-Gallery";  // 👈 repo name
 const baseFolder = "public/thumbnails";
-const genders = ["male", "female"];
+const genders = ["male", "female", "groups"];
 const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
-const maxImages = 3000; // safe limit
+const maxImages = 20000; // load limit for safety
 
-// inject gallery UI
+// UI inject karo
 document.body.insertAdjacentHTML("beforeend", `
   <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
     <h2>GTA V Asset Gallery</h2>
@@ -21,22 +21,28 @@ document.body.insertAdjacentHTML("beforeend", `
   </div>
 `);
 
-// GitHub API se folder listing fetch
+// Raw image path generator
+function rawImageURL(path, file) {
+  return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}/${file}`;
+}
+
+// GitHub API se folder ke file list lo
 async function fetchFolderImages(path) {
   const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   try {
     const res = await fetch(api);
     if (!res.ok) return [];
     const data = await res.json();
-    return data.filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".png"))
-               .map(f => f.download_url);
+    return data
+      .filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".png"))
+      .map(f => rawImageURL(path, f.name));
   } catch (err) {
     console.error("fetch error:", err);
     return [];
   }
 }
 
-// Load button click handler
+// Image loader
 async function loadImages() {
   const gender = document.getElementById("genderSelect").value;
   const group = document.getElementById("groupSelect").value;
@@ -55,8 +61,8 @@ async function loadImages() {
   let count = 0;
   for (const g of folders) {
     const path = `${baseFolder}/${gender}/${g}`;
-    status.textContent = `Loading ${path}...`;
     const urls = await fetchFolderImages(path);
+
     for (let i = 0; i < Math.min(urls.length, maxImages); i++) {
       const img = document.createElement("img");
       img.src = urls[i];
