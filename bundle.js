@@ -1,82 +1,53 @@
-// === GTA V Asset Gallery (Ashu Mods Final Fix) ===
-// Works with CAPITAL folder names (TASK, HEAD, etc.)
-// Layout & design remain unchanged.
+// GTA V Asset Gallery – debug build (temporary)
 
 const basePath = "public/thumbnails";
 const genders = ["male", "female"];
 const groups = ["ALL","ACCS","BERD","DECL","FEET","HAIR","HAND","HEAD","JBIB","LOWR","TASK","TEEF","UPPR"];
-const maxImages = 3000;
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("loadBtn")?.addEventListener("click", loadImages);
+document.addEventListener("DOMContentLoaded",()=>{
+  // UI draw
+  document.body.insertAdjacentHTML("beforeend",`
+    <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
+      <h2>GTA V Asset Gallery (debug)</h2>
+      <div style="margin-bottom:20px;">
+        <select id="genderSelect">${genders.map(g=>`<option>${g}</option>`).join("")}</select>
+        <select id="groupSelect">${groups.map(g=>`<option>${g}</option>`).join("")}</select>
+        <button id="loadBtn">Load Images</button>
+      </div>
+      <div id="status" style="color:#ccc;margin-bottom:10px;"></div>
+      <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
+    </div>`);
+
+  document.getElementById("loadBtn").addEventListener("click",loadImages);
 });
 
-async function fetchFolderImages(path) {
-  const api = `https://api.github.com/repos/gta5assets/GTA-V-Asset-Gallery/contents/${path}`;
-  try {
-    const res = await fetch(api);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data
-      .filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".png"))
-      .map(f => ({
-        name: f.name,
-        url: f.download_url
-      }));
-  } catch (e) {
-    console.error("fetch error:", e);
-    return [];
-  }
-}
+async function loadImages(){
+  const gender=document.getElementById("genderSelect").value;
+  const group=document.getElementById("groupSelect").value;
+  const path=`${basePath}/${gender}/${group}`;
+  const api=`https://api.github.com/repos/gta5assets/GTA-V-Asset-Gallery/contents/${path}`;
+  const status=document.getElementById("status");
+  const gallery=document.getElementById("gallery");
+  status.textContent=`Fetching → ${api}`;
+  gallery.innerHTML="";
 
-async function loadImages() {
-  const gender = document.getElementById("genderSelect")?.value || "male";
-  const group = document.getElementById("groupSelect")?.value || "ALL";
-  const gallery = document.getElementById("gallery");
-  if (!gallery) return;
-
-  gallery.innerHTML = `<p>Loading images...</p>`;
-
-  const folders = group === "ALL" ? groups.filter(g => g !== "ALL") : [group];
-  let count = 0;
-  const fragment = document.createDocumentFragment();
-
-  for (const g of folders) {
-    // Convert group to uppercase to match GitHub folders
-    const path = `${basePath}/${gender}/${g.toUpperCase()}`;
-    const imgs = await fetchFolderImages(path);
-
-    for (let i = 0; i < Math.min(imgs.length, maxImages); i++) {
-      const div = document.createElement("div");
-      div.style.display = "flex";
-      div.style.flexDirection = "column";
-      div.style.alignItems = "center";
-      div.style.margin = "6px";
-
-      const img = document.createElement("img");
-      img.src = imgs[i].url;
-      img.loading = "lazy";
-      img.style.width = "128px";
-      img.style.height = "128px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "6px";
-      img.style.boxShadow = "0 0 4px rgba(0,0,0,0.5)";
-      img.onclick = () => window.open(imgs[i].url, "_blank");
-
-      const label = document.createElement("span");
-      label.textContent = imgs[i].name;
-      label.style.fontSize = "11px";
-      label.style.color = "#aaa";
-      label.style.marginTop = "4px";
-
-      div.appendChild(img);
-      div.appendChild(label);
-      fragment.appendChild(div);
-      count++;
+  try{
+    const res=await fetch(api);
+    const data=await res.json();
+    console.log("GitHub API data for",path,":",data);
+    if(!Array.isArray(data)){status.textContent="No list received";return;}
+    let ok=0;
+    for(const f of data.filter(f=>f.name.toLowerCase().endsWith(".png"))){
+      const raw=f.download_url?.replace("https://github.com/","https://raw.githubusercontent.com/").replace("/blob/","/");
+      const img=document.createElement("img");
+      img.src=raw;
+      img.width=128;img.height=128;img.style.margin="4px";
+      gallery.appendChild(img);
+      ok++;
     }
+    status.textContent=ok?`Loaded ${ok} images from ${path}`:"No images found";
+  }catch(e){
+    status.textContent="Error → "+e;
+    console.error(e);
   }
-
-  gallery.innerHTML = "";
-  gallery.appendChild(fragment);
-  if (count === 0) gallery.innerHTML = `<p>No images found.</p>`;
 }
