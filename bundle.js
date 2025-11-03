@@ -3,32 +3,33 @@
 const owner = "gta5assets"; // <== apna GitHub username
 const repo = "GTA-V-Asset-Gallery"; // <== apna repo name
 const baseFolder = "public/thumbnails";
+
 const genders = ["male", "female"];
-const groups = [
-  "ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR",
-  "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"
-];
+const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
 const maxImages = 3000; // safe limit
 
-// inject gallery UI
-document.body.insertAdjacentHTML("beforeend", `
-<div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
-  <h2>GTA V Asset Gallery</h2>
-  <div style="margin-bottom:20px;">
-    <select id="genderSelect" style="padding:6px 10px;">
-      ${genders.map(g => `<option value="${g}">${g}</option>`).join("")}
-    </select>
-    <select id="groupSelect" style="padding:6px 10px;">
-      ${groups.map(g => `<option value="${g}">${g}</option>`).join("")}
-    </select>
-    <button id="loadBtn" style="padding:6px 14px;cursor:pointer;">Load Images</button>
+// Inject gallery UI
+document.body.insertAdjacentHTML(
+  "beforeend",
+  `
+  <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
+    <h2>GTA V Asset Gallery</h2>
+    <div style="margin-bottom:20px;">
+      <select id="genderSelect" style="padding:6px 10px;">
+        ${genders.map(g => `<option value="${g}">${g}</option>`).join('')}
+      </select>
+      <select id="groupSelect" style="padding:6px 10px;">
+        ${groups.map(g => `<option value="${g}">${g}</option>`).join('')}
+      </select>
+      <button id="loadBtn" style="padding:6px 14px;cursor:pointer;">Load Images</button>
+    </div>
+    <div id="status" style="color:#ccc;margin-bottom:10px;"></div>
+    <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
   </div>
-  <div id="status" style="color:#ccc;margin-bottom:10px;"></div>
-  <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
-</div>
-`);
+  `
+);
 
-// GitHub API se folder listing fetch
+// GitHub API se folder listing fetch function
 async function fetchFolderImages(path) {
   const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   try {
@@ -50,6 +51,7 @@ async function loadImages() {
   const group = document.getElementById("groupSelect").value;
   const gallery = document.getElementById("gallery");
   const status = document.getElementById("status");
+
   gallery.innerHTML = "";
   status.textContent = "Loading...";
 
@@ -65,6 +67,7 @@ async function loadImages() {
     const path = `${baseFolder}/${gender}/${g}`;
     status.textContent = `Loading ${path}...`;
     const urls = await fetchFolderImages(path);
+
     for (let i = 0; i < Math.min(urls.length, maxImages); i++) {
       const img = document.createElement("img");
       img.src = urls[i];
