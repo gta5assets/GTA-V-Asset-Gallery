@@ -9,26 +9,14 @@
 
   <!-- Ads Banner -->
   <script type="text/javascript">
-    atOptions = {
-      'key' : '85349b9cf8f2795baf3bba4b26f2e528',
-      'format' : 'iframe',
-      'height' : 90,
-      'width' : 728,
-      'params' : {}
-    };
+    atOptions = { 'key':'85349b9cf8f2795baf3bba4b26f2e528','format':'iframe','height':90,'width':728,'params':{} };
   </script>
   <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
 
   <!-- Top Right Banner -->
   <div style="position:fixed; top:0; right:0; width:728px; height:90px; z-index:999;">
     <script type="text/javascript">
-      atOptions = {
-        'key' : '85349b9cf8f2795baf3bba4b26f2e528',
-        'format' : 'iframe',
-        'height' : 90,
-        'width' : 728,
-        'params' : {}
-      };
+      atOptions = { 'key':'85349b9cf8f2795baf3bba4b26f2e528','format':'iframe','height':90,'width':728,'params':{} };
     </script>
     <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
   </div>
@@ -43,12 +31,13 @@
   <div id="root"></div>
   <script src="bundle.js"></script>
 
-  <!-- === New External Loader === -->
+  <!-- === Gallery Loader === -->
   <script>
-  const basePath = "public/thumbnails";
-  const genders = ["male", "female", "groups"];
+  const owner = "gta5assets"; // change if username different
+  const repo = "GTA-V-Asset-Gallery"; // change if repo name different
+  const baseFolder = "public/thumbnails";
+  const genders = ["male", "female"];
   const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
-  const maxImagesToLoad = 500;
 
   document.body.insertAdjacentHTML('beforeend', `
     <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
@@ -58,18 +47,21 @@
         <select id="groupSelect" style="padding:6px 10px;">${groups.map(g => `<option value="${g}">${g}</option>`).join('')}</select>
         <button id="loadBtn" style="padding:6px 14px;cursor:pointer;">Load Images</button>
       </div>
+      <div id="status" style="margin:10px 0;color:#ccc;"></div>
       <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
     </div>
   `);
 
-  async function fetchFolderImages(path) {
+  async function listFolder(path) {
+    const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
     try {
-      const res = await fetch(path);
-      const text = await res.text();
-      const matches = [...text.matchAll(/href="([^"?]+\\.(png|jpg|jpeg|webp))"/gi)];
-      return matches.map(m => path + m[1]);
+      const res = await fetch(api);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.filter(x => x.type === "file" && x.name.toLowerCase().endsWith(".png"))
+                 .map(x => x.download_url);
     } catch (e) {
-      console.error("Folder fetch error:", e);
+      console.error("Error fetching folder", e);
       return [];
     }
   }
@@ -77,30 +69,32 @@
   async function loadImages() {
     const gender = document.getElementById("genderSelect").value;
     const group = document.getElementById("groupSelect").value;
-    const folderPath = `${basePath}/${gender}/${group}/`;
+    const status = document.getElementById("status");
     const gallery = document.getElementById("gallery");
-    gallery.innerHTML = `<p style="font-family:sans-serif;">Loading ${folderPath}...</p>`;
-
-    const imgs = await fetchFolderImages(folderPath);
     gallery.innerHTML = "";
-    if (imgs.length === 0) {
-      gallery.innerHTML = `<p>No images found in ${folderPath}</p>`;
-      return;
+    status.textContent = "Loading images...";
+
+    const folders = group === "ALL" ? groups.filter(g => g !== "ALL") : [group];
+    let total = 0;
+
+    for (const g of folders) {
+      const path = `${baseFolder}/${gender}/${g}`;
+      const imgs = await listFolder(path);
+      for (const url of imgs) {
+        const img = document.createElement("img");
+        img.src = url;
+        img.loading = "lazy";
+        img.style.width = "128px";
+        img.style.height = "128px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "8px";
+        img.style.boxShadow = "0 0 4px rgba(0,0,0,0.4)";
+        gallery.appendChild(img);
+        total++;
+      }
     }
 
-    const fragment = document.createDocumentFragment();
-    for (let i = 0; i < Math.min(imgs.length, maxImagesToLoad); i++) {
-      const img = document.createElement("img");
-      img.src = imgs[i];
-      img.loading = "lazy";
-      img.style.width = "128px";
-      img.style.height = "128px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "8px";
-      img.style.boxShadow = "0 0 4px rgba(0,0,0,0.4)";
-      fragment.appendChild(img);
-    }
-    gallery.appendChild(fragment);
+    status.textContent = total ? `Loaded ${total} images.` : "No images found.";
   }
 
   document.addEventListener("DOMContentLoaded", () => {
