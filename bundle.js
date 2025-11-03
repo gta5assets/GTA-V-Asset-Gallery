@@ -1,13 +1,13 @@
-// GTA V Asset Gallery (Ashu Mods) - Working with GitHub Raw URLs
+// GTA V Asset Gallery (Ashu Mods) - With Image Names
 
 const owner = "gta5assets";          // 👈 apna GitHub username
 const repo = "GTA-V-Asset-Gallery";  // 👈 repo name
 const baseFolder = "public/thumbnails";
 const genders = ["male", "female", "groups"];
 const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
-const maxImages = 20000; // load limit for safety
+const maxImages = 2000;
 
-// UI inject karo
+// Gallery layout inject
 document.body.insertAdjacentHTML("beforeend", `
   <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
     <h2>GTA V Asset Gallery</h2>
@@ -17,16 +17,16 @@ document.body.insertAdjacentHTML("beforeend", `
       <button id="loadBtn" style="padding:6px 14px;cursor:pointer;">Load Images</button>
     </div>
     <div id="status" style="color:#ccc;margin-bottom:10px;"></div>
-    <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
+    <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;"></div>
   </div>
 `);
 
-// Raw image path generator
+// Raw image path creator
 function rawImageURL(path, file) {
   return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}/${file}`;
 }
 
-// GitHub API se folder ke file list lo
+// GitHub API fetch
 async function fetchFolderImages(path) {
   const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   try {
@@ -35,14 +35,17 @@ async function fetchFolderImages(path) {
     const data = await res.json();
     return data
       .filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".png"))
-      .map(f => rawImageURL(path, f.name));
+      .map(f => ({
+        url: rawImageURL(path, f.name),
+        name: f.name
+      }));
   } catch (err) {
     console.error("fetch error:", err);
     return [];
   }
 }
 
-// Image loader
+// Loader with name display
 async function loadImages() {
   const gender = document.getElementById("genderSelect").value;
   const group = document.getElementById("groupSelect").value;
@@ -52,28 +55,43 @@ async function loadImages() {
   status.textContent = "Loading...";
 
   let folders = [];
-  if (group === "ALL") {
-    folders = groups.filter(g => g !== "ALL");
-  } else {
-    folders = [group];
-  }
+  if (group === "ALL") folders = groups.filter(g => g !== "ALL");
+  else folders = [group];
 
   let count = 0;
+
   for (const g of folders) {
     const path = `${baseFolder}/${gender}/${g}`;
-    const urls = await fetchFolderImages(path);
+    const files = await fetchFolderImages(path);
 
-    for (let i = 0; i < Math.min(urls.length, maxImages); i++) {
+    for (let i = 0; i < Math.min(files.length, maxImages); i++) {
+      const card = document.createElement("div");
+      card.style.display = "flex";
+      card.style.flexDirection = "column";
+      card.style.alignItems = "center";
+      card.style.width = "150px";
+      card.style.marginBottom = "12px";
+
       const img = document.createElement("img");
-      img.src = urls[i];
+      img.src = files[i].url;
       img.loading = "lazy";
       img.style.width = "128px";
       img.style.height = "128px";
       img.style.objectFit = "cover";
       img.style.borderRadius = "8px";
       img.style.boxShadow = "0 0 4px rgba(0,0,0,0.4)";
-      img.onclick = () => window.open(urls[i], "_blank");
-      gallery.appendChild(img);
+      img.onclick = () => window.open(files[i].url, "_blank");
+
+      const name = document.createElement("div");
+      name.textContent = files[i].name;
+      name.style.fontSize = "11px";
+      name.style.color = "#aaa";
+      name.style.marginTop = "5px";
+      name.style.wordBreak = "break-all";
+
+      card.appendChild(img);
+      card.appendChild(name);
+      gallery.appendChild(card);
       count++;
     }
   }
