@@ -1,9 +1,10 @@
-// === GTA V Asset Gallery (Final Working Fix for Ashu Mods) ===
-// Keeps original layout; fixes image path (gender/group folders included)
+// === GTA V Asset Gallery (Ashu Mods Final Fix) ===
+// Works with CAPITAL folder names (TASK, HEAD, etc.)
+// Layout & design remain unchanged.
 
 const basePath = "public/thumbnails";
 const genders = ["male", "female"];
-const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
+const groups = ["ALL","ACCS","BERD","DECL","FEET","HAIR","HAND","HEAD","JBIB","LOWR","TASK","TEEF","UPPR"];
 const maxImages = 3000;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -20,7 +21,6 @@ async function fetchFolderImages(path) {
       .filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".png"))
       .map(f => ({
         name: f.name,
-        // convert API URL -> raw.githubusercontent.com path
         url: f.download_url
       }));
   } catch (e) {
@@ -37,13 +37,13 @@ async function loadImages() {
 
   gallery.innerHTML = `<p>Loading images...</p>`;
 
-  // load folders category-wise
   const folders = group === "ALL" ? groups.filter(g => g !== "ALL") : [group];
   let count = 0;
   const fragment = document.createDocumentFragment();
 
   for (const g of folders) {
-    const path = `${basePath}/${gender}/${g}`;
+    // Convert group to uppercase to match GitHub folders
+    const path = `${basePath}/${gender}/${g.toUpperCase()}`;
     const imgs = await fetchFolderImages(path);
 
     for (let i = 0; i < Math.min(imgs.length, maxImages); i++) {
