@@ -1,69 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>My GTA Assets</title>
+  <style>
+    body { background:#111; color:#eee; font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif; margin:0; padding:0; }
+    .topbar { padding:14px 18px; display:flex; gap:12px; align-items:center; background:#0d0d0d; border-bottom:1px solid #222; position:sticky; top:0; z-index:50; }
+    .container { padding:18px; max-width:1200px; margin:0 auto; }
+    h1 { margin:0 0 8px 0; color:#f4f4f4; }
+    .filters { display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap; }
+    .box { background:#141414; padding:12px; border-radius:8px; border:1px solid #222; }
+    .groups { max-height:340px; overflow:auto; padding:8px; display:flex; flex-direction:column; gap:6px; }
+    .gallery { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; justify-content:center; }
+    .thumb { width:128px; height:128px; object-fit:cover; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,.6); background:#222; }
+    .btn { padding:8px 12px; cursor:pointer; border-radius:6px; border:0; background:#1976d2; color:#fff; }
+    .muted { color:#bbb; font-size:13px; }
+    .col { display:flex; flex-direction:column; gap:8px; }
+    .row { display:flex; gap:10px; align-items:center; }
+    label { cursor:pointer; user-select:none; }
+  </style>
 </head>
 <body>
-	
-  
-  <!-- Ads Banner -->
-    <script type="text/javascript">
-	atOptions = {
-		'key' : '85349b9cf8f2795baf3bba4b26f2e528',
-		'format' : 'iframe',
-		'height' : 90,
-		'width' : 728,
-		'params' : {}
-	};
+
+  <!-- Top ad scripts preserved -->
+  <script type="text/javascript">
+    atOptions = { 'key' : '85349b9cf8f2795baf3bba4b26f2e528', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
   </script>
   <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
-  <div id="root"></div>
 
-	<div style="position:fixed; top:0; right:0; width:728px; height:90px; z-index:999;">
-	<script type="text/javascript">
-	atOptions = {
-		'key' : '85349b9cf8f2795baf3bba4b26f2e528',
-		'format' : 'iframe',
-		'height' : 90,
-		'width' : 728,
-		'params' : {}
-	};
-  </script>
-  <script type="text/javascript" src="//www.highperformanceformat.com/85349b9cf8f2795baf3bba4b26f2e528/invoke.js"></script>
-  <div id="root"></div> </div>
-	
-<!-- Ads Banners -->
-<!-- Ads NativBanner -->
-	<div style="position:fixed; right:0; top:120px; width:160px; z-index:999;">
-	<script async="async" data-cfasync="false" src="//pl27708186.revenuecpmgate.com/b86bf2587acfea20d938e7ec6026c781/invoke.js"></script>
-<div id="container-b86bf2587acfea20d938e7ec6026c781"></div> </div>
-<!-- Ads NativBanner -->
-	
+  <div class="topbar">
+    <div style="flex:1">
+      <strong style="color:#fff">GTA-V Asset Gallery</strong>
+      <div class="muted">Category-wise thumbnails — select gender(s) + group(s) → Load Images</div>
+    </div>
+    <!-- keep original bundle if you want; it's optional. Comment out if it conflicts -->
+    <div style="font-size:13px;color:#bbb">Repo gallery loader (client-side)</div>
+  </div>
 
-  <div id="root"></div>
+  <div class="container">
+    <div class="filters">
+      <div class="box col" style="min-width:180px">
+        <strong>Genders</strong>
+        <div class="row">
+          <input type="checkbox" id="gender_male" checked />
+          <label for="gender_male">Male</label>
+        </div>
+        <div class="row">
+          <input type="checkbox" id="gender_female" checked />
+          <label for="gender_female">Female</label>
+        </div>
+      </div>
+
+      <div class="box col" style="min-width:220px">
+        <strong>Groups</strong>
+        <div class="groups" id="groupsList"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+        <button id="loadButton" class="btn">Load Images</button>
+        <div class="muted">Load limit per folder: <span id="limitVal">200</span></div>
+      </div>
+    </div>
+
+    <div id="status" style="margin-top:12px;color:#cfcfcf"></div>
+    <div id="gallery" class="gallery" aria-live="polite"></div>
+  </div>
+
+  <!-- keep original bundle if present (will not be removed) -->
   <script src="bundle.js"></script>
 
+  <!-- === New GitHub-API based gallery loader === -->
+  <script>
+  (function(){
+    // CONFIG - change owner/repo if your repo name/owner differs
+    const owner = "gta5assets";
+    const repo = "GTA-V-Asset-Gallery";
+    const baseFolder = "public/thumbnails"; // inside repo
+    const groups = ["ALL","ACCS","BERD","DECL","FEET","HAIR","HAND","HEAD","JBIB","LOWR","TASK","TEEF","UPPR"];
+    const limitPerFolder = 200; // how many images to try per folder (safe default)
+    const allowedExt = [".png", ".jpg", ".jpeg", ".webp"];
+
+    // UI refs
+    const groupsList = document.getElementById("groupsList");
+    const gallery = document.getElementById("gallery");
+    const status = document.getElementById("status");
+    const loadButton = document.getElementById("loadButton");
+    const limitVal = document.getElementById("limitVal");
+    limitVal.textContent = limitPerFolder;
+
+    // build groups checkbox UI
+    groups.forEach(g => {
+      const id = "g_" + g;
+      const row = document.createElement("div");
+      row.className = "row";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = id;
+      cb.value = g;
+      // default: ALL selected
+      cb.checked = (g === "ALL");
+      const lab = document.createElement("label");
+      lab.htmlFor = id;
+      lab.textContent = " " + g;
+      row.appendChild(cb);
+      row.appendChild(lab);
+      groupsList.appendChild(row);
+    });
+
+    function getSelectedGroups(){
+      const boxes = groupsList.querySelectorAll("input[type=checkbox]");
+      return Array.from(boxes).filter(b => b.checked).map(b => b.value);
+    }
+
+    function getSelectedGenders(){
+      const male = document.getElementById("gender_male").checked;
+      const female = document.getElementById("gender_female").checked;
+      const out = [];
+      if(male) out.push("male");
+      if(female) out.push("female");
+      return out;
+    }
+
+    // Use GitHub REST API to list directory contents:
+    // GET https://api.github.com/repos/{owner}/{repo}/contents/{path}
+    async function listFolder(path) {
+      const api = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`;
+      try {
+        const res = await fetch(api);
+        if (res.status === 404) return []; // folder not found
+        if (!res.ok) throw new Error("GitHub API error: " + res.status);
+        const data = await res.json();
+        // data is an array of {name,path,download_url,type,...}
+        return data.filter(item => item.type === "file" && allowedExt.some(ext => item.name.toLowerCase().endsWith(ext)))
+                   .map(item => ({ name: item.name, url: item.download_url }));
+      } catch (err) {
+        console.error("listFolder error", err);
+        return [];
+      }
+    }
+
+    async function loadSelected() {
+      gallery.innerHTML = "";
+      status.textContent = "Preparing...";
+      const selGroups = getSelectedGroups();
+      const genders = getSelectedGenders();
+      if (genders.length === 0 || selGroups.length === 0) {
+        status.textContent = "Select at least one gender and one group.";
+        return;
+      }
+
+      status.textContent = `Loading ${genders.join(", ")} × ${selGroups.join(", ")} — this may take a few seconds...`;
+      const thumbs = [];
+      // Loop combinations (limited)
+      for (const gender of genders) {
+        for (const group of selGroups) {
+          // path in repo
+          const folderPath = `${baseFolder}/${gender}/${group}`;
+          status.textContent = `Listing ${folderPath}...`;
+          const files = await listFolder(folderPath);
+          if (!files.length) {
+            // no files in this folder
+            console.debug("no files:", folderPath);
+            continue;
+          }
+          // add up to limitPerFolder thumbnails (take first N)
+          for (let i=0;i<Math.min(files.length, limitPerFolder);i++){
+            thumbs.push({ url: files[i].url, name: files[i].name, folder: folderPath });
+          }
+        }
+      }
+
+      if (thumbs.length === 0) {
+        status.textContent = "No images found for selected filters.";
+        return;
+      }
+
+      // Display gradually to avoid blocking
+      status.textContent = `Displaying ${thumbs.length} images...`;
+      for (let i=0;i<thumbs.length;i++){
+        const a = thumbs[i];
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.loading = "lazy";
+        img.src = a.url;
+        img.alt = a.name;
+        // optional: open full size on click in new tab
+        img.style.cursor = "pointer";
+        img.addEventListener("click", ()=> window.open(a.url, "_blank"));
+        gallery.appendChild(img);
+        // small yield to keep UI responsive
+        if (i % 50 === 0) await new Promise(r => setTimeout(r, 20));
+      }
+      status.textContent = `Loaded ${thumbs.length} images. Click thumbnails to open full image.`;
+    }
+
+    loadButton.addEventListener("click", loadSelected);
+
+    // Auto-load default (male+female × ALL) but keep it manual to avoid hitting rate-limits
+    // Optionally uncomment to auto-run:
+    // document.addEventListener("DOMContentLoaded", ()=> loadSelected());
+  })();
+  </script>
+
+  <!-- social ad script preserved -->
+  <script type='text/javascript' src='//pl27708173.revenuecpmgate.com/a5/26/59/a526597337dc05bd49d4a48e8c83d1cb.js'></script>
+
 </body>
-
-	
-<!-- Ads Social Bar-->
-	<script type='text/javascript' src='//pl27708173.revenuecpmgate.com/a5/26/59/a526597337dc05bd49d4a48e8c83d1cb.js'></script>
-	
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
