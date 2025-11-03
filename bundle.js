@@ -1,82 +1,86 @@
-// === GTA V Asset Gallery (Ashu Mods Final Fix) ===
-// Works with CAPITAL folder names (TASK, HEAD, etc.)
-// Layout & design remain unchanged.
+// GTA V Asset Gallery - Category Wise Loader (Ashu Mods Version)
 
-const basePath = "public/thumbnails";
+const owner = "gta5assets";          // <== apna GitHub username
+const repo = "GTA-V-Asset-Gallery";  // <== apna repo name
+const baseFolder = "public/thumbnails";
 const genders = ["male", "female"];
-const groups = ["ALL","ACCS","BERD","DECL","FEET","HAIR","HAND","HEAD","JBIB","LOWR","TASK","TEEF","UPPR"];
-const maxImages = 3000;
+const groups = ["ALL", "ACCS", "BERD", "DECL", "FEET", "HAIR", "HAND", "HEAD", "JBIB", "LOWR", "TASK", "TEEF", "UPPR"];
+const maxImages = 3000; // safe limit
 
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("loadBtn")?.addEventListener("click", loadImages);
-});
+// inject gallery UI
+document.body.insertAdjacentHTML("beforeend", `
+  <div id="galleryContainer" style="padding:20px;text-align:center;margin-top:140px;">
+    <h2>GTA V Asset Gallery</h2>
+    <div style="margin-bottom:20px;">
+      <select id="genderSelect" style="padding:6px 10px;">
+        ${genders.map(g => `<option value="${g}">${g}</option>`).join('')}
+      </select>
+      <select id="groupSelect" style="padding:6px 10px;">
+        ${groups.map(g => `<option value="${g}">${g}</option>`).join('')}
+      </select>
+      <button id="loadBtn" style="padding:6px 14px;cursor:pointer;">Load Images</button>
+    </div>
+    <div id="status" style="color:#ccc;margin-bottom:10px;"></div>
+    <div id="gallery" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
+  </div>
+`);
 
+// GitHub API se folder listing fetch
 async function fetchFolderImages(path) {
-  const api = `https://api.github.com/repos/gta5assets/GTA-V-Asset-Gallery/contents/${path}`;
+  const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
   try {
     const res = await fetch(api);
     if (!res.ok) return [];
     const data = await res.json();
     return data
       .filter(f => f.type === "file" && f.name.toLowerCase().endsWith(".png"))
-      .map(f => ({
-        name: f.name,
-        url: f.download_url
-      }));
-  } catch (e) {
-    console.error("fetch error:", e);
+      .map(f => f.download_url);
+  } catch (err) {
+    console.error("fetch error:", err);
     return [];
   }
 }
 
+// Load button click handler
 async function loadImages() {
-  const gender = document.getElementById("genderSelect")?.value || "male";
-  const group = document.getElementById("groupSelect")?.value || "ALL";
+  const gender = document.getElementById("genderSelect").value;
+  const group = document.getElementById("groupSelect").value;
   const gallery = document.getElementById("gallery");
-  if (!gallery) return;
+  const status = document.getElementById("status");
+  gallery.innerHTML = "";
+  status.textContent = "Loading...";
 
-  gallery.innerHTML = `<p>Loading images...</p>`;
+  let folders = [];
+  if (group === "ALL") {
+    folders = groups.filter(g => g !== "ALL");
+  } else {
+    folders = [group];
+  }
 
-  const folders = group === "ALL" ? groups.filter(g => g !== "ALL") : [group];
   let count = 0;
-  const fragment = document.createDocumentFragment();
-
   for (const g of folders) {
-    // Convert group to uppercase to match GitHub folders
-    const path = `${basePath}/${gender}/${g.toUpperCase()}`;
-    const imgs = await fetchFolderImages(path);
-
-    for (let i = 0; i < Math.min(imgs.length, maxImages); i++) {
-      const div = document.createElement("div");
-      div.style.display = "flex";
-      div.style.flexDirection = "column";
-      div.style.alignItems = "center";
-      div.style.margin = "6px";
-
+    const path = `${baseFolder}/${gender}/${g}`;
+    status.textContent = `Loading ${path}...`;
+    const urls = await fetchFolderImages(path);
+    for (let i = 0; i < Math.min(urls.length, maxImages); i++) {
       const img = document.createElement("img");
-      img.src = imgs[i].url;
+      img.src = urls[i];
       img.loading = "lazy";
       img.style.width = "128px";
       img.style.height = "128px";
       img.style.objectFit = "cover";
-      img.style.borderRadius = "6px";
-      img.style.boxShadow = "0 0 4px rgba(0,0,0,0.5)";
-      img.onclick = () => window.open(imgs[i].url, "_blank");
-
-      const label = document.createElement("span");
-      label.textContent = imgs[i].name;
-      label.style.fontSize = "11px";
-      label.style.color = "#aaa";
-      label.style.marginTop = "4px";
-
-      div.appendChild(img);
-      div.appendChild(label);
-      fragment.appendChild(div);
+      img.style.borderRadius = "8px";
+      img.style.boxShadow = "0 0 4px rgba(0,0,0,0.4)";
+      img.onclick = () => window.open(urls[i], "_blank");
+      gallery.appendChild(img);
       count++;
     }
   }
 
-  gallery.innerHTML = "";
-  gallery.appendChild(fragment);
-  if (count === 0) gallery.innerHTML = `<p>No images found.</p>`;
+  status.textContent = count > 0 ? `Loaded ${count} images.` : "No images found.";
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("loadBtn");
+  if (btn) btn.addEventListener("click", loadImages);
+});
