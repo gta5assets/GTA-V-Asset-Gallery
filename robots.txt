@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gta5assets.github.io/GTA-V-Asset-Gallery/sitemap.xml
